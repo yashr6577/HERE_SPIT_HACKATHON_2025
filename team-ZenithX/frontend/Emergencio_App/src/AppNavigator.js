@@ -1,18 +1,51 @@
 import React from 'react';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from './screens/HomeScreen';
-import MapScreen from './screens/MapScreen';
+import { Ionicons } from '@expo/vector-icons';
 
-const Stack = createNativeStackNavigator();
+import HomeScreen from './screens/HomeScreen';
+import EmergencyScreen from './screens/EmergencyScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import NearbyPlacesScreen from './screens/NearbyPlacesScreen';
+import EnableJourneyScreen from './screens/EnableJourneyScreen';
+
+const Tab = createBottomTabNavigator();
+const Drawer = createDrawerNavigator();
+
+function BottomTabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+          if (route.name === 'Home') iconName = 'home';
+          else if (route.name === 'Emergency') iconName = 'alert-circle';
+          else if (route.name === 'Profile') iconName = 'person';
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: 'tomato',
+        tabBarInactiveTintColor: 'gray',
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Emergency" component={EmergencyScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
+  );
+}
 
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Map" component={MapScreen} />
-      </Stack.Navigator>
+      <Drawer.Navigator initialRouteName="Main">
+        <Drawer.Screen name="Main" component={BottomTabs} />
+        <Drawer.Screen name="Enable Journey" component={EnableJourneyScreen} />
+        <Drawer.Screen name="Nearby Places" component={NearbyPlacesScreen} />
+      </Drawer.Navigator>
     </NavigationContainer>
   );
 }
+
