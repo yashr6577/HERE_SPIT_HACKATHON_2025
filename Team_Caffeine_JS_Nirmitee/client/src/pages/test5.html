@@ -1,0 +1,717 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>HERE Vector Tiles with Restaurant Data</title>
+        <meta
+            name="viewport"
+            content="initial-scale=1,maximum-scale=1,user-scalable=no"
+        />
+        <link
+            href="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.css"
+            rel="stylesheet"
+        />
+        <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: Arial, sans-serif;
+            }
+            #map {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 100%;
+            }
+            #controls {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 10px;
+                border-radius: 5px;
+                z-index: 1;
+                max-width: 300px;
+            }
+            #legend {
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                background: rgba(255, 255, 255, 0.9);
+                padding: 15px;
+                border-radius: 5px;
+                z-index: 1;
+                font-size: 12px;
+            }
+            .legend-item {
+                display: flex;
+                align-items: center;
+                margin: 5px 0;
+            }
+            .legend-color {
+                display: inline-block;
+                width: 12px;
+                height: 12px;
+                margin-right: 5px;
+                border-radius: 50%;
+            }
+            button {
+                margin: 2px;
+                padding: 5px 10px;
+                border: none;
+                border-radius: 3px;
+                background-color: #007cbf;
+                color: white;
+                cursor: pointer;
+            }
+            button:hover {
+                background-color: #005a87;
+            }
+            button.active {
+                background-color: #005a87;
+            }
+            .filter-section {
+                margin-top: 10px;
+                border-top: 1px solid #ddd;
+                padding-top: 8px;
+            }
+            .filter-group {
+                margin: 5px 0;
+            }
+            .filter-title {
+                font-weight: bold;
+                margin-bottom: 3px;
+            }
+            select {
+                width: 100%;
+                padding: 4px;
+                margin-bottom: 5px;
+            }
+            .popup-content {
+                padding: 8px;
+            }
+            .popup-title {
+                font-weight: bold;
+                font-size: 14px;
+                margin-bottom: 5px;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 5px;
+            }
+            .popup-detail {
+                font-size: 12px;
+                margin: 3px 0;
+            }
+            .delivery-time {
+                display: inline-block;
+                background: #f0f0f0;
+                padding: 2px 6px;
+                border-radius: 3px;
+                margin-top: 5px;
+                font-weight: bold;
+            }
+            .search-box {
+                width: 100%;
+                padding: 5px;
+                margin-bottom: 5px;
+                border-radius: 3px;
+                border: 1px solid #ccc;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="controls">
+            <div>
+                <strong>Andheri Restaurants Map</strong>
+                <input
+                    id="search-box"
+                    class="search-box"
+                    placeholder="Search by name or cuisine..."
+                    type="text"
+                />
+                <div class="filter-section">
+                    <div class="filter-group">
+                        <div class="filter-title">Filter by cuisine:</div>
+                        <select id="cuisine-filter">
+                            <option value="">All Cuisines</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="North Indian">North Indian</option>
+                            <option value="South Indian">South Indian</option>
+                            <option value="Fast Food">Fast Food</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Thai">Thai</option>
+                            <option value="Indian">Indian</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-title">Filter by ratings:</div>
+                        <select id="rating-filter">
+                            <option value="">All Ratings</option>
+                            <option value="1000">1000+ Reviews</option>
+                            <option value="500">500+ Reviews</option>
+                            <option value="100">100+ Reviews</option>
+                            <option value="50">50+ Reviews</option>
+                            <option value="20">20+ Reviews</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-title">Filter by delivery time:</div>
+                        <select id="time-filter">
+                            <option value="">Any Time</option>
+                            <option value="45">Under 45 min</option>
+                            <option value="50">Under 50 min</option>
+                            <option value="55">Under 55 min</option>
+                            <option value="60">Under 60 min</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="reset-filters">Reset All Filters</button>
+            </div>
+            <div id="status" style="margin-top: 10px; font-size: 12px">
+                Loading restaurants...
+            </div>
+        </div>
+
+        <div id="legend">
+            <strong>Restaurant Legend</strong><br />
+            <div class="legend-item">
+                <span
+                    class="legend-color"
+                    style="background-color: #ff5252"
+                ></span>
+                1000+ Reviews
+            </div>
+            <div class="legend-item">
+                <span
+                    class="legend-color"
+                    style="background-color: #ff9800"
+                ></span>
+                500+ Reviews
+            </div>
+            <div class="legend-item">
+                <span
+                    class="legend-color"
+                    style="background-color: #ffc107"
+                ></span>
+                100+ Reviews
+            </div>
+            <div class="legend-item">
+                <span
+                    class="legend-color"
+                    style="background-color: #4caf50"
+                ></span>
+                50+ Reviews
+            </div>
+            <div class="legend-item">
+                <span
+                    class="legend-color"
+                    style="background-color: #2196f3"
+                ></span>
+                20+ Reviews
+            </div>
+        </div>
+
+        <div id="map"></div>
+        <script>
+            // Replace with your HERE API key
+            const apiKey = 'xHhgsquXklvitNDTbfgp_tWdZ-rJWr4Njtl-66vFggk';
+
+            const sampleGeoJSONData = {
+                type: 'FeatureCollection',
+                features: [
+                    {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [72.8729633, 19.1138382],
+                        },
+                        properties: {
+                            restaurant: 'Demo Restaurant 1',
+                            total_ratings: 1200,
+                            food_type: 'Chinese, Thai, Asian',
+                            formatted_address:
+                                'Sample Address 1, Andheri East, Mumbai',
+                            delivery_time: 45,
+                        },
+                    },
+                    {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [72.8829633, 19.1238382],
+                        },
+                        properties: {
+                            restaurant: 'Demo Restaurant 2',
+                            total_ratings: 500,
+                            food_type: 'North Indian, Mughlai',
+                            formatted_address:
+                                'Sample Address 2, Andheri East, Mumbai',
+                            delivery_time: 60,
+                        },
+                    },
+                    {
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: [72.8629633, 19.1038382],
+                        },
+                        properties: {
+                            restaurant: 'Demo Restaurant 3',
+                            total_ratings: 100,
+                            food_type: 'South Indian, Dosa',
+                            formatted_address:
+                                'Sample Address 3, Andheri West, Mumbai',
+                            delivery_time: 30,
+                        },
+                    },
+                ],
+            };
+            // Initialize the map
+            const map = new maplibregl.Map({
+                container: 'map',
+                style: {
+                    version: 8,
+                    sources: {
+                        hereVectorTiles: {
+                            type: 'vector',
+                            tiles: [
+                                `https://vector.hereapi.com/v2/vectortiles/base/mc/{z}/{x}/{y}/omv?apikey=${apiKey}`,
+                            ],
+                            tileSize: 512,
+                        },
+                        restaurants: {
+                            type: 'geojson',
+                            data: {
+                                type: 'FeatureCollection',
+                                features: [],
+                            },
+                        },
+                    },
+                    layers: [
+                        // HERE Base Layers
+                        {
+                            id: 'landuse_here',
+                            type: 'fill',
+                            source: 'hereVectorTiles',
+                            'source-layer': 'landuse',
+                            paint: {
+                                'fill-color': '#e0e0e0',
+                            },
+                        },
+                        {
+                            id: 'water_here',
+                            type: 'fill',
+                            source: 'hereVectorTiles',
+                            'source-layer': 'water',
+                            paint: {
+                                'fill-color': '#a0c8f0',
+                            },
+                        },
+                        {
+                            id: 'buildings_here',
+                            type: 'fill',
+                            source: 'hereVectorTiles',
+                            'source-layer': 'buildings',
+                            paint: {
+                                'fill-color': '#d9d9d9',
+                                'fill-outline-color': '#bbbbbb',
+                            },
+                        },
+                        {
+                            id: 'roads_here',
+                            type: 'line',
+                            source: 'hereVectorTiles',
+                            'source-layer': 'roads',
+                            paint: {
+                                'line-color': '#ffffff',
+                                'line-width': 1,
+                            },
+                        },
+                        // Restaurant data layer
+                        {
+                            id: 'restaurants-circles',
+                            type: 'circle',
+                            source: 'restaurants',
+                            paint: {
+                                'circle-radius': [
+                                    'interpolate',
+                                    ['linear'],
+                                    ['get', 'total_ratings'],
+                                    20,
+                                    8,
+                                    50,
+                                    10,
+                                    100,
+                                    12,
+                                    500,
+                                    14,
+                                    1000,
+                                    16,
+                                ],
+                                'circle-color': [
+                                    'match',
+                                    ['get', 'rating_category'],
+                                    '1000+',
+                                    '#FF5252',
+                                    '500+',
+                                    '#FF9800',
+                                    '100+',
+                                    '#FFC107',
+                                    '50+',
+                                    '#4CAF50',
+                                    '20+',
+                                    '#2196F3',
+                                    '#BBBBBB',
+                                ],
+                                'circle-opacity': 0.8,
+                                'circle-stroke-width': 1,
+                                'circle-stroke-color': '#FFFFFF',
+                            },
+                        },
+                    ],
+                },
+                center: [72.8729633, 19.1138382], // Default center (Andheri)
+                zoom: 13,
+            });
+
+            // Add navigation controls
+            map.addControl(new maplibregl.NavigationControl());
+
+            // Function to update status
+            function updateStatus(message) {
+                document.getElementById('status').textContent = message;
+            }
+
+            // Function to prepare restaurant data for display
+            // function prepareRestaurantData(data) {
+            //     if (!data || !data.features || data.features.length === 0) return data;
+
+            //     // Process each feature to add rating categories
+            //     data.features.forEach(feature => {
+            //         if (feature.properties && feature.properties.total_ratings) {
+            //             const ratings = parseInt(feature.properties.total_ratings);
+
+            //             if (ratings >= 1000) {
+            //                 feature.properties.rating_category = '1000+';
+            //             } else if (ratings >= 500) {
+            //                 feature.properties.rating_category = '500+';
+            //             } else if (ratings >= 100) {
+            //                 feature.properties.rating_category = '100+';
+            //             } else if (ratings >= 50) {
+            //                 feature.properties.rating_category = '50+';
+            //             } else {
+            //                 feature.properties.rating_category = '20+';
+            //             }
+
+            //             // Clean up food types for display
+            //             if (feature.properties.food_type) {
+            //                 feature.properties.food_type = feature.properties.food_type
+            //                     .replace(/,/g, ', ')  // Add space after commas
+            //                     .replace(/\s\s+/g, ' '); // Remove multiple spaces
+            //             }
+            //         }
+
+            //         // Remove features with empty coordinates
+            //         if (feature.geometry &&
+            //             (!feature.geometry.coordinates ||
+            //              feature.geometry.coordinates.length === 0 ||
+            //              (feature.geometry.coordinates.length === 2 &&
+            //               (!feature.geometry.coordinates[0] || !feature.geometry.coordinates[1])))) {
+            //             feature.properties.invalid_coordinates = true;
+            //         }
+            //     });
+
+            //     // Filter out features with invalid coordinates
+            //     data.features = data.features.filter(f => !f.properties.invalid_coordinates);
+
+            //     return data;
+            // }
+            function prepareRestaurantData(data) {
+                // First, validate the data structure
+                if (!data) return createDefaultData();
+                if (!data.type || data.type !== 'FeatureCollection')
+                    return createDefaultData();
+                if (!Array.isArray(data.features)) return createDefaultData();
+
+                // Process each feature to add rating categories
+                data.features = data.features.filter(feature => {
+                    // Skip invalid features
+                    if (!feature.geometry || !feature.properties) return false;
+                    if (
+                        !feature.geometry.coordinates ||
+                        feature.geometry.coordinates.length < 2
+                    )
+                        return false;
+
+                    // Add rating category
+                    if (feature.properties.total_ratings) {
+                        const ratings = parseInt(
+                            feature.properties.total_ratings
+                        );
+
+                        if (ratings >= 1000) {
+                            feature.properties.rating_category = '1000+';
+                        } else if (ratings >= 500) {
+                            feature.properties.rating_category = '500+';
+                        } else if (ratings >= 100) {
+                            feature.properties.rating_category = '100+';
+                        } else if (ratings >= 50) {
+                            feature.properties.rating_category = '50+';
+                        } else {
+                            feature.properties.rating_category = '20+';
+                        }
+                    } else {
+                        // Default if no ratings
+                        feature.properties.rating_category = '20+';
+                        feature.properties.total_ratings = 20;
+                    }
+
+                    // Ensure food_type exists
+                    if (!feature.properties.food_type) {
+                        feature.properties.food_type = 'Unspecified';
+                    } else {
+                        // Clean up food types for display
+                        feature.properties.food_type =
+                            feature.properties.food_type
+                                .replace(/,/g, ', ')
+                                .replace(/\s\s+/g, ' ');
+                    }
+
+                    // Ensure delivery_time exists
+                    if (!feature.properties.delivery_time) {
+                        feature.properties.delivery_time = 45;
+                    }
+
+                    // Ensure restaurant name exists
+                    if (!feature.properties.restaurant) {
+                        feature.properties.restaurant = 'Unnamed Restaurant';
+                    }
+
+                    // Ensure address exists
+                    if (!feature.properties.formatted_address) {
+                        feature.properties.formatted_address =
+                            'Andheri, Mumbai';
+                    }
+
+                    return true;
+                });
+                // If no valid features remain, return default data
+                if (data.features.length === 0) {
+                    return createDefaultData();
+                }
+
+                return data;
+            }
+            // Create default data when original data is invalid
+            function createDefaultData() {
+                console.warn('Using fallback data due to invalid input');
+                return sampleGeoJSONData;
+            }
+
+            // Function to load restaurant data
+            function loadRestaurantData() {
+                updateStatus('Loading restaurant data...');
+
+                fetch('./andheri_restaurants.geojson')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(
+                                `HTTP error! status: ${response.status}`
+                            );
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Prepare and process the data
+                        const processedData = prepareRestaurantData(data);
+
+                        // Update the map source with restaurant data
+                        map.getSource('restaurants').setData(processedData);
+
+                        // Calculate the center of the data for map positioning
+                        const bounds = new maplibregl.LngLatBounds();
+
+                        let featuresWithValidCoords = 0;
+
+                        processedData.features.forEach(feature => {
+                            try {
+                                if (
+                                    feature.geometry &&
+                                    feature.geometry.coordinates &&
+                                    feature.geometry.coordinates.length >= 2 &&
+                                    !isNaN(feature.geometry.coordinates[0]) &&
+                                    !isNaN(feature.geometry.coordinates[1])
+                                ) {
+                                    bounds.extend(feature.geometry.coordinates);
+                                    featuresWithValidCoords++;
+                                }
+                            } catch (coordErr) {
+                                console.warn(
+                                    'Issue with coordinates',
+                                    coordErr
+                                );
+                            }
+                        });
+
+                        // Fit map to the data bounds with some padding
+                        if (featuresWithValidCoords > 0 && !bounds.isEmpty()) {
+                            map.fitBounds(bounds, { padding: 50 });
+                        }
+
+                        updateStatus(
+                            `Loaded ${processedData.features.length} restaurants`
+                        );
+
+                        // Store the original data for filtering
+                        window.originalRestaurantData = processedData;
+                    })
+                    .catch(error => {
+                        console.error("Error processing data:", e);
+                        // Use sample data as fallback
+                        map.getSource('restaurants').setData(sampleGeoJSONData);
+                        updateStatus(`Using sample data (${sampleGeoJSONData.features.length} restaurants)`);
+                        window.originalRestaurantData = sampleGeoJSONData;
+                    });
+            }
+
+            // Filter restaurants based on user selections
+            function filterRestaurants() {
+                if (!window.originalRestaurantData) return;
+
+                const cuisineFilter =
+                    document.getElementById('cuisine-filter').value;
+                const ratingFilter =
+                    document.getElementById('rating-filter').value;
+                const timeFilter = document.getElementById('time-filter').value;
+                const searchText = document
+                    .getElementById('search-box')
+                    .value.toLowerCase();
+
+                // Clone the original data
+                const filteredData = JSON.parse(
+                    JSON.stringify(window.originalRestaurantData)
+                );
+
+                // Apply filters
+                filteredData.features = filteredData.features.filter(
+                    feature => {
+                        const props = feature.properties;
+
+                        // Check cuisine filter
+                        if (
+                            cuisineFilter &&
+                            !props.food_type
+                                .toLowerCase()
+                                .includes(cuisineFilter.toLowerCase())
+                        ) {
+                            return false;
+                        }
+
+                        // Check rating filter
+                        if (ratingFilter) {
+                            const minRating = parseInt(ratingFilter);
+                            if (props.total_ratings < minRating) {
+                                return false;
+                            }
+                        }
+
+                        // Check delivery time filter
+                        if (timeFilter && props.delivery_time) {
+                            const maxTime = parseInt(timeFilter);
+                            if (props.delivery_time > maxTime) {
+                                return false;
+                            }
+                        }
+
+                        // Check search text filter
+                        if (searchText) {
+                            const matchesName = props.restaurant
+                                .toLowerCase()
+                                .includes(searchText);
+                            const matchesCuisine = props.food_type
+                                .toLowerCase()
+                                .includes(searchText);
+                            if (!matchesName && !matchesCuisine) {
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    }
+                );
+
+                // Update the map data
+                map.getSource('restaurants').setData(filteredData);
+                updateStatus(
+                    `Showing ${filteredData.features.length} restaurants`
+                );
+            }
+
+            // Add popup functionality for restaurants
+            map.on('click', 'restaurants-circles', function (e) {
+                const feature = e.features[0];
+                const props = feature.properties;
+
+                const cuisineFormatted = props.food_type
+                    .split(',')
+                    .map(cuisine => cuisine.trim())
+                    .filter(cuisine => cuisine)
+                    .join(', ');
+
+                // Create popup content
+                const popupContent = `
+                <div class="popup-content">
+                    <div class="popup-title">${props.restaurant}</div>
+                    <div class="popup-detail"><strong>Cuisine:</strong> ${cuisineFormatted}</div>
+                    <div class="popup-detail"><strong>Ratings:</strong> ${props.total_ratings} reviews</div>
+                    <div class="popup-detail"><strong>Delivery Time:</strong> <span class="delivery-time">${props.delivery_time} mins</span></div>
+                    <div class="popup-detail"><strong>Address:</strong> ${props.formatted_address}</div>
+                </div>
+            `;
+
+                new maplibregl.Popup()
+                    .setLngLat(feature.geometry.coordinates)
+                    .setHTML(popupContent)
+                    .addTo(map);
+            });
+
+            // Change cursor on hover
+            map.on('mouseenter', 'restaurants-circles', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'restaurants-circles', function () {
+                map.getCanvas().style.cursor = '';
+            });
+
+            // Set up event listeners for filters
+            document
+                .getElementById('cuisine-filter')
+                .addEventListener('change', filterRestaurants);
+            document
+                .getElementById('rating-filter')
+                .addEventListener('change', filterRestaurants);
+            document
+                .getElementById('time-filter')
+                .addEventListener('change', filterRestaurants);
+            document
+                .getElementById('search-box')
+                .addEventListener('input', filterRestaurants);
+
+            // Reset filters button
+            document
+                .getElementById('reset-filters')
+                .addEventListener('click', function () {
+                    document.getElementById('cuisine-filter').value = '';
+                    document.getElementById('rating-filter').value = '';
+                    document.getElementById('time-filter').value = '';
+                    document.getElementById('search-box').value = '';
+                    filterRestaurants();
+                });
+
+            // Load restaurant data on map load
+            map.on('load', function () {
+                loadRestaurantData();
+            });
+        </script>
+    </body>
+</html>
