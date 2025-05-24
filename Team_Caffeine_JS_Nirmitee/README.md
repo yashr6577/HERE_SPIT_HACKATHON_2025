@@ -152,3 +152,7 @@ Open `Segmentation_Here_Hackathon.ipynb` and run each cell step by step to see t
 - Real-time GPS trace integration for live map updates
 - Crowdsourced anomaly reporting via mobile app
 - LLM-guided feedback loop for continuous improvement
+
+## Presentation Slides
+
+[Presentation Slides](https://docs.google.com/presentation/d/11GCBJuqbkzWKMA2Jat-pTnVZ6D9cxhX2mjlz3_vEwW4/edit?usp=sharing)
