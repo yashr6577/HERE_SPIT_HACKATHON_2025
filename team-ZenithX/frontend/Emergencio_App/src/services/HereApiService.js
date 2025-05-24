@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Replace with your actual API base URL
-const API_BASE_URL = 'https://1e73-103-104-226-58.ngrok-free.app'; // Update this with your actual backend URL
+export const API_BASE_URL = 'https://0016-103-104-226-58.ngrok-free.app'; // Update this with your actual backend URL
 
 class HereApiService {
   // Calculate route between two points
@@ -23,8 +23,10 @@ class HereApiService {
   // Get alternative routes
   static async getAlternativeRoutes(source, destination, transportMode = 'car', alternatives = 3) {
     try {
-      console.log(`Fetching alternative routes from ${source} to ${destination} with transport mode ${transportMode} and ${alternatives} alternatives`);
-      
+      // console.log(`Fetching alternative routes from ${source} to ${destination} with transport mode ${transportMode} and ${alternatives} alternatives`);
+      console.log(source);
+      console.log(destination);
+      console.log(`${API_BASE_URL}/routes/alternate`)
       const response = await axios.post(`${API_BASE_URL}/routes/alternate`, {
         source,
         destination,

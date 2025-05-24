@@ -31,14 +31,34 @@
 // });
 
 
+import axios from 'axios';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { API_BASE_URL } from '../services/HereApiService';
+
 
 const HomeScreen = ({ navigation }) => {
   const [isSOSActive, setIsSOSActive] = useState(false);
 
-  const handleSOSPress = () => {
+  const handleSOSPress = async() => {
     setIsSOSActive(true);
+    //actually hit api to send SOS signal
+    try {
+     await axios.post(API_BASE_URL+"/message", {
+        message: 'SOS! I need help!',
+        location: {
+          latitude: 19.1231,
+          longitude: 72.8358,
+        },
+      })
+    } catch (error) {
+      console.error('Error sending SOS:', error);
+      Alert.alert('Error', 'Failed to send SOS signal. Please try again.');
+      setIsSOSActive(false);
+      return;
+      
+    }
+
     Alert.alert(
       'Emergency Alert', 
       'SOS signal sent to emergency services and your emergency contacts!',
