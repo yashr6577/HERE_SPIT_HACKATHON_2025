@@ -1,11 +1,15 @@
 import  axios from 'axios';
+import { geocode, reverseGeocode } from '../service/geocodeService.js';
 const HERE_API_KEY = "9Dpxsv-LXOYn_WzclZVeaRi8-R2WOJkG75xWaAW01pk";
  
 
 async function calculateRoute(req, res) {
     try {
-      const { source, destination, transportMode = 'car' } = req.body;
-      
+      let { source, destination, transportMode = 'car' } = req.body;
+      // if(!destination){
+      // source={ lat: 19.1231478, lng: 72.8358381 }
+        if(!destination?.lat) destination={ lat: 18.50419, lng: 73.85286 }
+      // }
       if (!source || !destination) {
         return res.status(400).json({ 
           success: false, 
@@ -88,8 +92,12 @@ async function calculateRoute(req, res) {
 
   async function  getAlternativeRoutes(req, res) {
     try {
-      const { source, destination, transportMode = 'car', alternatives = 3 } = req.body;
+      let { source, destination, transportMode = 'car', alternatives = 3 } = req.body;
       console.log(source);
+      //  let { source, destination, transportMode = 'car' } = req.body;
+      // if(!destination){
+      // source={ lat: 19.1231478, lng: 72.8358381 }
+        destination={ lat: 18.50419, lng: 73.85286 }
       console.log(destination);
       
       if (!source || !destination) {
@@ -134,6 +142,66 @@ async function calculateRoute(req, res) {
       });
     }
   }
+
+
+export async function getreverse(req,res) {
+  const {latitude,longitude} = req.body;
+  console.log(latitude,longitude);
+  
+
+  const rres=await reverseGeocode(latitude,longitude);
+  console.log(rres.success);
+
+  return res.status(200).json({
+    success: true,
+    data: rres.data
+  });
+  
+}
+
+
+
+export async function getcode(req,res) {
+  const {title="Pune"} = req.body;
+  const rres=await geocode(title);
+  console.log(rres.success);
+
+  return res.status(200).json({
+    success: true,
+    data: rres.data
+  });
+  
+}
+
+// Example: GET /incidents?lat=28.61&lng=77.23&radius=5000
+export async function getIncidents(req, res) {
+  try {
+    const { lat, lng, radius = 5000 } = req.query;
+    if (!lat || !lng) {
+      return res.status(400).json({ success: false, message: 'lat and lng are required' });
+    }
+
+    const response = await axios.get('https://traffic.ls.hereapi.com/traffic/6.3/incidents.json', {
+      params: {
+        apiKey: HERE_API_KEY,
+        prox: `${lat},${lng},${radius}`,
+        criticality: 'minor,major,critical'
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      incidents: response.data.TRAFFIC_ITEMS?.TRAFFIC_ITEM || []
+    });
+  } catch (error) {
+    console.error('Incident fetch error:', error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch incidents',
+      error: error.message
+    });
+  }
+}
 
 
 export {

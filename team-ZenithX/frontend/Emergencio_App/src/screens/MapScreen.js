@@ -186,12 +186,15 @@ const MapScreen = () => {
 
     setLoading(true);
     try {
+      console.log(`Fetching alternative routes from ${currentLocation} to ${destination} with transport mode ${selectedTransportMode}`);
+      
       const response = await HereApiService.getAlternativeRoutes(
         currentLocation,
         destination,
         selectedTransportMode,
         3
       );
+      console.log(destination,currentLocation);
       
       if (response.success && response.data.routes && response.data.routes.length > 0) {
         const routes = response.data.routes.map((routeData, index) => ({
@@ -871,3 +874,4 @@ const styles = StyleSheet.create({
 });
 
 export default MapScreen;
+

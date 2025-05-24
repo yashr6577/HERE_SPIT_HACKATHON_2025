@@ -45,10 +45,8 @@ import RouteDetailsScreen from './screens/RouteDetailsScreen ';
       <NavigationContainer>
         <Drawer.Navigator initialRouteName="Main">
           <Drawer.Screen name="Main" component={BottomTabs} />
-          <Drawer.Screen name="Enable Journey" component={EnableJourneyScreen} />
-          <Drawer.Screen name="Nearby Places" component={NearbyPlacesScreen} />
           <Drawer.Screen name="Map" component={MapScreen} />
-          <Drawer.Screen name="ne" component={EmergencyScreen} />
+          <Drawer.Screen name="Emergency" component={EmergencyScreen} />
            <Drawer.Screen name="Traffic" component={TrafficScreen} />
           <Drawer.Screen name="Route-details" component={RouteDetailsScreen} />
         </Drawer.Navigator>

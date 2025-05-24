@@ -5,8 +5,8 @@ import axios from 'axios';
 
 export async function sendMessage(req, res) {
     
-const accountSid = 'AC13c630c09e2b6e5c96097d8d2a2525d1';
-const authToken = 'b8b1ac231334da8bba519e685af33586';
+const accountSid = 'SAMPLE_ACCOUNT_SID'; // Replace with your Twilio Account SID
+const authToken = 'SAMPLE_AUTH_TOKEN'; // Replace with your Twilio Auth Token
 const client = new twilio(accountSid, authToken);
 
 const {message,location} = req.body;
