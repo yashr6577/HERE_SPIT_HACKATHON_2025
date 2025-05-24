@@ -119,7 +119,7 @@ const RouteDetailsScreen = ({ navigation }) => {
     <View style={[styles.routeCard, route.isMain && styles.mainRoute]}>
       <View style={styles.routeHeader}>
         <Text style={styles.routeTitle}>
-          {`route.isMain ? 'Main Route' : Alternative ${index}`}
+          {route.isMain ? 'Main Route' : `Alternative ${index}`}
         </Text>
         {route.isMain && <Text style={styles.mainBadge}>FASTEST</Text>}
       </View>

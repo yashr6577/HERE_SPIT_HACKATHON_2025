@@ -1,11 +1,7 @@
 import axios from 'axios';
 
 // Replace with your actual API base URL
-<<<<<<< HEAD
 const API_BASE_URL = ' https://0016-103-104-226-58.ngrok-free.app'; // Update this with your actual backend URL
-=======
-export const API_BASE_URL = 'https://0016-103-104-226-58.ngrok-free.app'; // Update this with your actual backend URL
->>>>>>> 798c0a87883cdd7db80d158f67aa90184157d89b
 
 class HereApiService {
   // Calculate route between two points
